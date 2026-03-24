@@ -177,7 +177,9 @@
       width: fit-content; max-width: 72%;
       font-size: 0.88rem; line-height: 1.55;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.25);
-      position: relative; overflow: hidden;
+      position: relative; overflow: visible;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
     .message::before {
       content: "";
