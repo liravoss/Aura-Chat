@@ -46,6 +46,13 @@ function initChat() {
     myAvatar.style.display = "block";
   }
 
+  // Add self to users list
+  addUserToList({
+    userId: user._id || user.id,
+    username: user.username,
+    avatar: user.avatarUrl
+  });
+
   // Connect to backend socket (connectSocket is defined in /js/socket.js)
   const chatSocket = connectSocket(roomId, user._id || user.id);
 
@@ -80,10 +87,8 @@ function initChat() {
   function sendMessage(text) {
     const txt = (typeof text === "string") ? text.trim() : messageInput.value.trim();
     if (!txt) return;
-    // Emit message to server
     chatSocket.emit("message", { roomId, text: txt });
-    // Clear input only if we used the input
-    if (!text) messageInput.value = "";
+    if (typeof text !== "string") messageInput.value = ""; // ← fixed condition
   }
 
   sendBtn.addEventListener("click", () => sendMessage());

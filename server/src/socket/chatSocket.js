@@ -11,12 +11,62 @@ module.exports = function (io) {
     socket.on('join', async ({ roomId, userId }) => {
       try {
         if (!roomId || !userId) return;
+
+        // Prevent duplicate joins on reconnect
+        const rooms = Array.from(socket.rooms);
+        if (rooms.includes(roomId)) return;
+
         socket.join(roomId);
         socket.data.userId = userId;
+        socket.data.roomId = roomId;
+
         const user = await User.findById(userId).lean();
-        socket.data.language = (user?.language || 'en').toLowerCase();
-        console.log(`[socket] ${socket.id} joined ${roomId} as ${user?.username} lang=${socket.data.language}`);
-        socket.to(roomId).emit('user-joined', { userId, username: user?.username, avatar: user?.avatarUrl });
+        if (!user) return;
+
+        socket.data.language = (user.language || 'en').toLowerCase();
+        socket.data.username = user.username;
+        socket.data.avatar = user.avatarUrl;
+
+        console.log(`[join] ${user.username} joined ${roomId} lang=${socket.data.language}`);
+
+        // Notify others
+        socket.to(roomId).emit('user-joined', {
+          userId,
+          username: user.username,
+          avatar: user.avatarUrl
+        });
+
+        // ── SEND LAST 50 MESSAGES TO THE JOINER ──
+        const history = await Message.find({ room: roomId })
+          .sort({ createdAt: 1 })
+          .limit(50)
+          .lean();
+
+        for (const msg of history) {
+          const targetLang = socket.data.language;
+          let translated = msg.originalText;
+
+          if (targetLang !== msg.originalLanguage) {
+            try {
+              translated = await translateText(msg.originalText, msg.originalLanguage, targetLang);
+            } catch (e) {
+              console.error('[history translate] error', e?.message);
+            }
+          }
+
+          socket.emit('message', {
+            id: msg._id,
+            roomId,
+            senderId: msg.senderId,
+            senderName: msg.senderName,
+            originalLanguage: msg.originalLanguage,
+            text: translated,
+            originalText: msg.originalText,
+            createdAt: msg.createdAt,
+            targetLanguage: targetLang
+          });
+        }
+
       } catch (e) {
         console.error('join error', e);
       }
@@ -27,14 +77,14 @@ module.exports = function (io) {
       try {
         const senderId = socket.data.userId;
         if (!senderId || !roomId || !text) {
-          console.warn('[message] missing senderId/roomId/text', { senderId, roomId, text: !!text });
+          console.warn('[message] missing senderId/roomId/text');
           return;
         }
 
         const sender = await User.findById(senderId).lean();
         const originalLang = (sender.language || 'en').toLowerCase();
 
-        // Persist the original message
+        // Persist to MongoDB
         const msg = await Message.create({
           room: roomId,
           senderId,
@@ -43,26 +93,21 @@ module.exports = function (io) {
           originalText: text
         });
 
-        console.log(`[message] saved msg ${msg._id} from ${sender.username} lang=${originalLang} text="${text.slice(0,50)}"`);
+        console.log(`[message] saved ${msg._id} from ${sender.username}`);
 
-        // Get all sockets in room
+        // Deliver translated to each recipient
         const clients = await io.in(roomId).fetchSockets();
         for (const s of clients) {
           const targetLang = (s.data.language || 'en').toLowerCase();
-
           let translated = text;
-          let didTranslate = false;
 
-          if (targetLang && targetLang !== originalLang) {
+          if (targetLang !== originalLang) {
             try {
               translated = await translateText(text, originalLang, targetLang);
-              didTranslate = true;
             } catch (e) {
-              console.error('[translate per-recipient] error', e?.message || e);
+              console.error('[translate] error', e?.message);
             }
           }
-
-          console.log(`[deliver] to socket ${s.id} targetLang=${targetLang} translated=${didTranslate} preview="${translated.slice(0,60)}"`);
 
           s.emit('message', {
             id: msg._id,
@@ -77,13 +122,19 @@ module.exports = function (io) {
             targetLanguage: targetLang
           });
         }
+
       } catch (e) {
         console.error('message handler error', e);
       }
     });
 
+    // ── NOTIFY ROOM ON DISCONNECT ──
     socket.on('disconnect', () => {
+      const { roomId, userId, username } = socket.data;
       console.log('socket disconnected', socket.id);
+      if (roomId && userId) {
+        socket.to(roomId).emit('user-left', { userId, username });
+      }
     });
   });
 };
