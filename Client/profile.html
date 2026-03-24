@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>AuraChat – Profile</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  color: white;
+  min-height: 100vh;
+  padding: 24px 20px 40px;
+  overflow-x: hidden;
+}
+
+/* ══ VIVID BACKGROUND ══ */
+.bg-image {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  filter: brightness(0.58) saturate(1.5);
+  z-index: 0;
+}
+
+.bg-tints {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 60% at 15% 25%, rgba(0, 60, 200, 0.5) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 70% at 85% 75%, rgba(80, 0, 180, 0.45) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 55% 5%, rgba(0, 140, 220, 0.38) 0%, transparent 55%);
+}
+
+.bg-film {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  background: rgba(2, 8, 30, 0.38);
+}
+
+.scanlines {
+  position: fixed; inset: 0; z-index: 3; pointer-events: none;
+  background: repeating-linear-gradient(transparent, transparent 2px, rgba(0,200,255,0.015) 3px);
+}
+
+#aura-bg {
+  position: fixed; inset: 0; z-index: 3;
+  pointer-events: none; width: 100%; height: 100%;
+}
+
+/* Boot screen */
+#bootScreen {
+  position: fixed; inset: 0;
+  background: #020818;
+  color: rgba(120,210,255,0.9);
+  font-family: 'Orbitron', monospace;
+  font-size: 1.8rem; letter-spacing: 8px;
+  display: grid; place-items: center;
+  z-index: 9999;
+  animation: fadeOut 1.2s forwards 2.4s;
+}
+
+/* Corners */
+.corner { position:fixed; z-index:20; opacity:0.5; width:40px; height:40px; }
+.corner-tl { top:18px; left:18px;   border-top:1.5px solid rgba(255,255,255,0.55); border-left: 1.5px solid rgba(255,255,255,0.55); border-radius:4px 0 0 0; }
+.corner-tr { top:18px; right:18px;  border-top:1.5px solid rgba(255,255,255,0.55); border-right:1.5px solid rgba(255,255,255,0.55); border-radius:0 4px 0 0; }
+.corner-bl { bottom:18px; left:18px;  border-bottom:1.5px solid rgba(255,255,255,0.55); border-left: 1.5px solid rgba(255,255,255,0.55); border-radius:0 0 0 4px; }
+.corner-br { bottom:18px; right:18px; border-bottom:1.5px solid rgba(255,255,255,0.55); border-right:1.5px solid rgba(255,255,255,0.55); border-radius:0 0 4px 0; }
+
+/* ══ GLASS CARD ══ */
+.glass-box {
+  position: relative;
+  z-index: 10;
+  max-width: 560px;
+  margin: 50px auto 40px;
+  border-radius: 24px;
+  padding: 40px 36px;
+
+  /* Almost-transparent base — the bg must show through */
+  background: rgba(8, 18, 65, 0.16);
+
+  backdrop-filter: blur(22px) saturate(200%) brightness(1.08);
+  -webkit-backdrop-filter: blur(22px) saturate(200%) brightness(1.08);
+
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 0 0 0.5px rgba(255,255,255,0.10),
+    0 24px 80px rgba(0, 0, 0, 0.55),
+    0 0 50px rgba(30, 80, 255, 0.12),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.58),
+    inset 0 -1px   0 rgba(0, 0, 0, 0.22),
+    inset  1px 0   0 rgba(255,255,255,0.12),
+    inset -1px 0   0 rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+/* Top specular line */
+.glass-box::before {
+  content: "";
+  position: absolute; top:0; left:8%; right:8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.9) 25%, rgba(210,240,255,1) 50%, rgba(255,255,255,0.9) 75%, transparent 100%);
+}
+
+/* Sweep */
+.glass-box::after {
+  content: "";
+  position: absolute; top:0; left:-130%; width:65%; height:100%;
+  background: linear-gradient(108deg, transparent 35%, rgba(255,255,255,0.06) 48%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 52%, transparent 65%);
+  animation: shineSwipe 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.glitch-header {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 8px;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(120,210,255,0.85), 0 0 28px rgba(80,180,255,0.5), 0 0 55px rgba(40,130,255,0.3);
+  animation: flicker 3s infinite;
+  margin-bottom: 6px;
+  position: relative; z-index: 1;
+}
+
+.header-sub {
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.78rem; letter-spacing: 5px;
+  color: rgba(180, 220, 255, 0.72);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  position: relative; z-index: 1;
+}
+
+.typewriter {
+  font-family: "Courier New", monospace;
+  white-space: pre-line;
+  font-size: 0.8rem; line-height: 1.7;
+  border-right: 2px solid rgba(120,210,255,0.8);
+  width: 0; overflow: hidden;
+  color: rgba(160, 215, 255, 0.85);
+  animation: typing 3.5s steps(80,end) 0.5s forwards, blink 0.8s infinite;
+  margin-bottom: 28px;
+  background: rgba(0, 30, 100, 0.2);
+  border-radius: 10px; padding: 10px 14px;
+  border-left: 2px solid rgba(80,160,255,0.25);
+  position: relative; z-index: 1;
+}
+
+label {
+  display: block;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(160, 210, 255, 0.85);
+  margin-bottom: 7px; margin-top: 20px;
+  position: relative; z-index: 1;
+}
+
+input[type="text"],
+input[type="file"],
+select {
+  /* Glass input fields */
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 13px 16px;
+  width: 100%;
+  border-radius: 14px;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  transition: all 0.25s;
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.1);
+  position: relative; z-index: 1;
+}
+
+input[type="text"]:focus, select:focus {
+  border-color: rgba(120, 210, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(80,180,255,0.15), inset 0 1px 0 rgba(255,255,255,0.2);
+  outline: none;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+input[type="text"]::placeholder { color: rgba(160,210,255,0.38); }
+
+#languageSearch { margin-bottom: 8px; }
+
+#languageWrapper {
+  max-height: 0; overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(8, 20, 80, 0.3);
+  backdrop-filter: blur(20px);
+  padding: 0 8px;
+  transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1), padding 0.3s;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  position: relative; z-index: 1;
+}
+#languageWrapper.open { max-height: 220px; padding: 8px; }
+
+#language { width:100%; background:transparent; border:none; color:white; font-family:'Inter',sans-serif; }
+#language option { background:#060e30; color:white; }
+#language::-webkit-scrollbar { width:5px; }
+#language::-webkit-scrollbar-track { background:rgba(255,255,255,0.05); border-radius:10px; }
+#language::-webkit-scrollbar-thumb { background:rgba(120,210,255,0.45); border-radius:10px; }
+
+#avatarPreview {
+  width:88px; height:88px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,0.28);
+  display:none; margin-top:12px;
+  object-fit:cover;
+  box-shadow: 0 0 20px rgba(80,180,255,0.25), inset 0 1px 0 rgba(255,255,255,0.3);
+  position: relative; z-index:1;
+}
+
+/* Glass buttons */
+.btn-primary {
+  width:100%; margin-top:28px; padding:16px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,0.30);
+  background: rgba(30, 80, 220, 0.35);
+  backdrop-filter: blur(12px);
+  color:#fff;
+  font-family:'Rajdhani',sans-serif;
+  font-size:0.85rem; font-weight:700;
+  letter-spacing:4px; text-transform:uppercase;
+  cursor:pointer; transition:all 0.3s;
+  position:relative; overflow:hidden; z-index:1;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.45),
+    inset 0 -1px 0 rgba(0,0,0,0.2),
+    0 6px 24px rgba(20,60,200,0.35);
+}
+.btn-primary::before {
+  content:"";
+  position:absolute; top:0; left:0; right:0; height:50%;
+  background:linear-gradient(to bottom, rgba(255,255,255,0.14), transparent);
+  border-radius:16px 16px 0 0;
+}
+.btn-primary:hover {
+  background: rgba(40, 100, 255, 0.48);
+  box-shadow: 0 0 28px rgba(80,180,255,0.38), 0 8px 32px rgba(20,60,200,0.45), inset 0 1.5px 0 rgba(255,255,255,0.5);
+  transform:translateY(-1px);
+}
+
+.btn-secondary {
+  width:100%; margin-top:12px; padding:14px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.07);
+  backdrop-filter: blur(10px);
+  color:rgba(200,225,255,0.85);
+  font-family:'Rajdhani',sans-serif;
+  font-size:0.8rem; font-weight:600;
+  letter-spacing:3px; text-transform:uppercase;
+  cursor:pointer; transition:all 0.25s;
+  position:relative; z-index:1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.12);
+  border-color:rgba(120,210,255,0.4);
+  color:#fff;
+}
+
+#saveScan {
+  display:none; text-align:center; margin-top:14px;
+  font-family:'Rajdhani',sans-serif; font-size:0.8rem;
+  letter-spacing:5px; color:rgba(120,210,255,0.9);
+  animation:pulse 1s infinite; position:relative; z-index:1;
+}
+
+.section-divider {
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+  margin:24px 0; position:relative; z-index:1;
+}
+
+@keyframes flicker { 0%,95%,100%{opacity:1} 96%{opacity:0.7} 98%{opacity:0.4} }
+@keyframes typing { from{width:0} to{width:100%} }
+@keyframes blink { 50%{border-color:transparent} }
+@keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+@keyframes fadeOut { to{opacity:0;visibility:hidden} }
+@keyframes shineSwipe { 0%{left:-130%} 45%,100%{left:160%} }
+</style>
+</head>
+<body>
+
+<div id="bootScreen">AURA BOOTING…</div>
+
+<img class="bg-image" src="img/miku.jpg" alt="" />
+<div class="bg-tints"></div>
+<div class="bg-film"></div>
+<div class="scanlines"></div>
+
+<canvas id="aura-bg"></canvas>
+
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
+<div class="corner corner-br"></div>
+
+<script>
+(function(){
+  const c=document.getElementById('aura-bg');
+  const ctx=c.getContext('2d');
+  let W,H,orbs;
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
+  function mkOrbs(){
+    orbs=[
+      {x:W*.15,y:H*.25,r:W*.5, color:'26,79,214', speed:0.0008,a:0},
+      {x:W*.85,y:H*.75,r:W*.45,color:'79,195,247',speed:0.0006,a:1},
+      {x:W*.55,y:H*.05,r:W*.4, color:'13,47,138', speed:0.0007,a:2},
+    ];
+  }
+  resize();mkOrbs();
+  window.addEventListener('resize',()=>{resize();mkOrbs();});
+  let t=0;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    orbs.forEach(o=>{
+      const pulse=Math.sin(t*o.speed*1000+o.a)*0.3+0.7;
+      const g=ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r*pulse);
+      g.addColorStop(0,`rgba(${o.color},0.08)`);
+      g.addColorStop(0.5,`rgba(${o.color},0.04)`);
+      g.addColorStop(1,`rgba(${o.color},0)`);
+      ctx.fillStyle=g;
+      ctx.beginPath();ctx.arc(o.x,o.y,o.r*pulse,0,Math.PI*2);ctx.fill();
+    });
+    t=performance.now()/1000;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+
+<div class="glass-box">
+  <h1 class="glitch-header">AURA CHAT</h1>
+  <div class="header-sub">Profile Setup</div>
+
+  <div class="typewriter">
+Initializing profile module...
+Loading UI components...
+Ready.
+  </div>
+
+  <label for="username">Username</label>
+  <input id="username" type="text" placeholder="Enter your name..." autocomplete="off" />
+
+  <label for="languageSearch">Preferred Language</label>
+  <input id="languageSearch" type="text" placeholder="Search language..." autocomplete="off" />
+
+  <div id="languageWrapper">
+    <select id="language" size="10">
+      <option value="en">🇺🇸 English</option>
+      <option value="hi">🇮🇳 Hindi</option>
+      <option value="es">🇪🇸 Spanish</option>
+      <option value="fr">🇫🇷 French</option>
+      <option value="de">🇩🇪 German</option>
+      <option value="it">🇮🇹 Italian</option>
+      <option value="pt">🇵🇹 Portuguese</option>
+      <option value="ru">🇷🇺 Russian</option>
+      <option value="ja">🇯🇵 Japanese</option>
+      <option value="ko">🇰🇷 Korean</option>
+      <option value="zh">🇨🇳 Chinese (Simplified)</option>
+      <option value="zt">🇹🇼 Chinese (Traditional)</option>
+      <option value="ar">🇸🇦 Arabic</option>
+      <option value="bn">🇧🇩 Bengali</option>
+      <option value="ur">🇵🇰 Urdu</option>
+      <option value="pa">🇮🇳 Punjabi</option>
+      <option value="ta">🇮🇳 Tamil</option>
+      <option value="te">🇮🇳 Telugu</option>
+      <option value="mr">🇮🇳 Marathi</option>
+      <option value="gu">🇮🇳 Gujarati</option>
+      <option value="ml">🇮🇳 Malayalam</option>
+      <option value="kn">🇮🇳 Kannada</option>
+      <option value="ne">🇳🇵 Nepali</option>
+      <option value="si">🇱🇰 Sinhala</option>
+      <option value="th">🇹🇭 Thai</option>
+      <option value="vi">🇻🇳 Vietnamese</option>
+      <option value="id">🇮🇩 Indonesian</option>
+      <option value="ms">🇲🇾 Malay</option>
+      <option value="tl">🇵🇭 Filipino</option>
+      <option value="tr">🇹🇷 Turkish</option>
+      <option value="fa">🇮🇷 Persian</option>
+      <option value="uk">🇺🇦 Ukrainian</option>
+      <option value="pl">🇵🇱 Polish</option>
+      <option value="nl">🇳🇱 Dutch</option>
+      <option value="sv">🇸🇪 Swedish</option>
+      <option value="no">🇳🇴 Norwegian</option>
+      <option value="da">🇩🇰 Danish</option>
+      <option value="fi">🇫🇮 Finnish</option>
+      <option value="cs">🇨🇿 Czech</option>
+      <option value="sk">🇸🇰 Slovak</option>
+      <option value="hu">🇭🇺 Hungarian</option>
+      <option value="he">🇮🇱 Hebrew</option>
+      <option value="ro">🇷🇴 Romanian</option>
+      <option value="el">🇬🇷 Greek</option>
+      <option value="sr">🇷🇸 Serbian</option>
+      <option value="hr">🇭🇷 Croatian</option>
+      <option value="bg">🇧🇬 Bulgarian</option>
+      <option value="et">🇪🇪 Estonian</option>
+      <option value="lv">🇱🇻 Latvian</option>
+      <option value="lt">🇱🇹 Lithuanian</option>
+    </select>
+  </div>
+
+  <label for="avatarFile">Upload Avatar</label>
+  <input id="avatarFile" type="file" accept="image/*" />
+  <img id="avatarPreview" alt="Avatar preview" />
+
+  <div class="section-divider"></div>
+
+  <button id="saveBtn" class="btn-primary">Save Profile</button>
+  <div id="saveScan">SCANNING...</div>
+  <button class="btn-secondary" onclick="window.location.href='community.html'">← Back to Community</button>
+</div>
+
+<script>
+  const wrapper=document.getElementById("languageWrapper");
+  const search=document.getElementById("languageSearch");
+  const langSelect=document.getElementById("language");
+  search.addEventListener("focus",()=>wrapper.classList.add("open"));
+  search.addEventListener("blur",()=>setTimeout(()=>wrapper.classList.remove("open"),300));
+  search.addEventListener("input",()=>{
+    const f=search.value.toLowerCase();
+    for(const opt of langSelect.options){
+      opt.style.display=opt.textContent.toLowerCase().includes(f)?"block":"none";
+    }
+  });
+  const userLang=navigator.language.slice(0,2);
+  for(const opt of langSelect.options){if(opt.value===userLang){opt.selected=true;break;}}
+  let delay=0;
+  for(const opt of langSelect.options){
+    opt.style.opacity=0;
+    setTimeout(()=>{opt.style.transition="opacity 0.3s";opt.style.opacity=1;},delay);
+    delay+=25;
+  }
+</script>
+
+<script src="/js/utils.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/profile.js"></script>
+</body>
+</html>

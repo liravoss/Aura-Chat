@@ -1,0 +1,72 @@
+:root{
+  /* Miku Neon Theme */
+  --bg: #100030; /* Very dark purple/blue background */
+  --card: #1d005e; /* Darker purple for card backgrounds */
+  --muted: #a6a6ff; /* Soft violet/blue for muted text */
+  --accent: #39ffdb; /* Bright Cyan/Aqua Neon for accents (Miku hair color) */
+  --highlight: #ff00ff; /* Bright Magenta Neon for buttons/my messages */
+  --text: #e6eef8; /* Light text */
+}
+
+*{box-sizing:border-box;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}
+body{margin:0;background:linear-gradient(180deg, var(--bg) 0%, #08003d 100%);color:var(--text); transition: background 0.5s ease;}
+/* Miku Wallpaper for Community Page */
+body.miku-wallpaper {
+    /* Miku Neon Wallpaper URL placeholder */
+    background-image: url('https://placehold.co/1920x1080/100030/39ffdb?text=Hatsune+Miku+Neon+Background'); 
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+}
+.container{max-width:1000px;margin:28px auto;padding:18px;}
+.card{background:rgba(29, 0, 94, 0.85); /* Slightly transparent card to see background */ padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(0, 0, 0, 0.8), 0 0 15px var(--accent) inset;} /* Added neon shadow */
+.header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.logo{font-weight:700;color:var(--accent);font-size:20px;text-shadow: 0 0 5px var(--accent);} /* Neon glow */
+.form-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.input,select,button,textarea{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:inherit;transition: border-color 0.3s;}
+.input:focus,select:focus,textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 5px var(--accent);}
+.button{background:linear-gradient(90deg, var(--accent), var(--highlight));border:none;color:var(--bg);font-weight:700;cursor:pointer; text-shadow: none; transition: all 0.2s; box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);}
+.button:hover{filter: brightness(1.2); box-shadow: 0 0 10px var(--accent);}
+.avatar-preview{width:72px;height:72px;border-radius:10px;object-fit:cover;border:2px solid var(--accent);box-shadow: 0 0 8px var(--accent);}
+.room-list{display:flex;flex-direction:column;gap:8px;}
+.room-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:12px;background:rgba(255,255,255,0.05);border: 1px solid rgba(255,255,255,0.08); transition: background 0.2s;}
+.room-item:hover { background: rgba(57, 255, 219, 0.1); border-color: var(--accent); cursor: pointer;}
+.chat-area{display:grid;grid-template-columns:300px 1fr;gap:12px;height:70vh;}
+.sidebar{padding:12px;overflow:auto;}
+.chat-box{display:flex;flex-direction:column;height:100%;background:rgba(29, 0, 94, 0.85);padding:12px;border-radius:12px;border: 1px solid rgba(255,255,255,0.1);}
+.messages{flex-grow:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:10px;background:rgba(0,0,0,0.1);border-radius:8px;margin-bottom:10px;}
+.message{max-width:80%;padding:10px 14px;border-radius:18px 18px 18px 4px;background:#37007e;word-wrap:break-word;align-self:flex-start;border: 1px solid rgba(255,255,255,0.1);}
+.message.me{background:var(--highlight);color:var(--bg);align-self:flex-end;border-radius:18px 18px 4px 18px; box-shadow: 0 0 8px rgba(255, 0, 255, 0.5);} /* My message highlight */
+.message .meta{font-size:10px;color:var(--muted);margin-bottom:2px;}
+.message.me .meta{color:var(--bg);opacity:0.8;}
+.message .text{font-size:14px;white-space:pre-wrap;}
+.input-row{display:flex;gap:10px;}
+.lang-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:var(--accent);color:var(--bg);text-shadow: 0 0 3px var(--accent);}
+.small-btn{padding:8px 12px;font-size:13px;}
+
+/* GIF Modal Styles */
+.gif-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+.gif-modal-content { background: var(--card); padding: 20px; border-radius: 12px; width: 95%; max-width: 700px; height: 80vh; display: flex; flex-direction: column; border: 1px solid var(--accent); box-shadow: 0 0 20px var(--accent); }
+.gif-search-bar { display: flex; gap: 10px; margin-bottom: 15px; }
+.gif-results { flex-grow: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; overflow-y: scroll; padding: 5px; }
+.gif-item { cursor: pointer; border-radius: 8px; overflow: hidden; position: relative; transition: transform 0.1s, box-shadow 0.2s; background: rgba(255, 255, 255, 0.1); }
+.gif-item:hover { transform: scale(1.03); box-shadow: 0 0 10px var(--highlight); }
+.gif-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gif-close-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; color: white; border-radius: 50%; width: 30px; height: 30px; line-height: 30px; text-align: center; cursor: pointer; font-size: 1.2rem; }
+.gif-loading { text-align: center; padding: 20px; color: var(--muted); }
+
+/* GIF Rendering in Chat */
+.message .gif-content img { max-width: 100%; max-height: 200px; border-radius: 8px; border: 2px solid var(--accent); display: block; margin-top: 5px; }
+
+@media (max-width: 768px) {
+    .chat-area {
+        grid-template-columns: 1fr;
+        height: 85vh;
+    }
+    .sidebar {
+        display: none;
+    }
+    .gif-modal-content {
+        height: 90vh;
+    }
+}

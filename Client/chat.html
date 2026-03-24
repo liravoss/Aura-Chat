@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Chat — AuraChat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: white;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ══ VIVID BACKGROUND — the glass looks through this ══ */
+    .bg-image {
+      position: fixed; inset: 0; z-index: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center;
+      filter: brightness(0.58) saturate(1.5);
+    }
+
+    .bg-tints {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background:
+        radial-gradient(ellipse 70% 60% at 15% 25%, rgba(0,60,200,0.5) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 70% at 85% 75%, rgba(80,0,180,0.45) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 55% 5%, rgba(0,140,220,0.35) 0%, transparent 55%);
+    }
+
+    .bg-film {
+      position: fixed; inset: 0; z-index: 2; pointer-events: none;
+      background: rgba(2, 8, 30, 0.35);
+    }
+
+    .scanlines {
+      position: fixed; inset: 0; z-index: 3; pointer-events: none;
+      background: repeating-linear-gradient(transparent, transparent 2px, rgba(0,200,255,0.015) 3px);
+    }
+
+    .grid-bg {
+      position: fixed; inset: 0; z-index: 3; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0,200,255,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,255,0.045) 1px, transparent 1px);
+      background-size: 52px 52px;
+    }
+
+    #aura-bg {
+      position: fixed; inset: 0; z-index: 3;
+      pointer-events: none; width: 100%; height: 100%;
+    }
+
+    /* ══ CHAT WRAPPER — the main glass container ══ */
+    .chat-wrapper {
+      position: relative; z-index: 10;
+      display: flex;
+      width: 92%; max-width: 1140px;
+      margin: 36px auto;
+      border-radius: 24px;
+      overflow: hidden;
+      min-height: 80vh;
+
+      /* Ultra-transparent — background shows through */
+      background: rgba(6, 15, 55, 0.15);
+
+      backdrop-filter: blur(22px) saturate(200%) brightness(1.08);
+      -webkit-backdrop-filter: blur(22px) saturate(200%) brightness(1.08);
+
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      box-shadow:
+        0 0 0 0.5px rgba(255,255,255,0.08),
+        0 24px 80px rgba(0,0,0,0.55),
+        0 0 50px rgba(30,80,255,0.12),
+        inset 0 1.5px 0 rgba(255,255,255,0.55),
+        inset 0 -1px 0 rgba(0,0,0,0.2),
+        inset 1px 0 0 rgba(255,255,255,0.12),
+        inset -1px 0 0 rgba(255,255,255,0.08);
+    }
+
+    /* Top specular shine */
+    .chat-wrapper::before {
+      content: "";
+      position: absolute; top: 0; left: 6%; right: 6%;
+      height: 1px; z-index: 2;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.88) 25%, rgba(210,240,255,1) 50%, rgba(255,255,255,0.88) 75%, transparent 100%);
+    }
+
+    /* Light sweep */
+    .chat-wrapper::after {
+      content: "";
+      position: absolute; top: 0; left: -130%; width: 65%; height: 100%;
+      background: linear-gradient(108deg, transparent 35%, rgba(255,255,255,0.05) 48%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.05) 52%, transparent 65%);
+      animation: shineSwipe 8s ease-in-out infinite;
+      pointer-events: none; z-index: 1;
+    }
+
+    /* ══ Sidebar ══ */
+    .sidebar {
+      width: 240px; flex-shrink: 0;
+      background: rgba(255,255,255,0.05);
+      border-right: 1px solid rgba(255,255,255,0.15);
+      padding: 28px 20px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+
+    .logo {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.2rem; font-weight: 900; letter-spacing: 5px;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(120,210,255,0.85), 0 0 24px rgba(80,180,255,0.5);
+    }
+
+    #roomTitle {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(160,210,255,0.7);
+      border-top: 1px solid rgba(255,255,255,0.12);
+      padding-top: 14px;
+    }
+
+    .users-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.66rem; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(120,210,255,0.75);
+    }
+
+    #usersListInner { font-size: 0.82rem; color: rgba(200,225,255,0.78); line-height: 2.2; }
+
+    /* ══ Chat panel ══ */
+    .chat-panel {
+      flex: 1; display: flex; flex-direction: column;
+      padding: 28px; min-width: 0;
+      background: transparent;
+    }
+
+    .user-bar {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 20px; padding-bottom: 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+
+    #myAvatar {
+      width: 48px; height: 48px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.26);
+      display: none; object-fit: cover;
+      box-shadow: 0 0 16px rgba(80,180,255,0.22), inset 0 1px 0 rgba(255,255,255,0.25);
+    }
+
+    #myName { font-weight: 600; font-size: 1rem; color: rgba(225,240,255,0.95); }
+    #myLang { font-family:'Rajdhani',sans-serif; font-size:0.7rem; letter-spacing:2px; text-transform:uppercase; color:rgba(160,210,255,0.65); }
+
+    /* ══ Messages ══ */
+    #messages {
+      flex: 1; overflow-y: auto; padding-right: 8px;
+      display: flex; flex-direction: column; gap: 12px;
+      min-height: 0; max-height: 50vh;
+    }
+    #messages::-webkit-scrollbar { width: 4px; }
+    #messages::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius:10px; }
+    #messages::-webkit-scrollbar-thumb { background: rgba(120,210,255,0.38); border-radius:10px; }
+
+    .message {
+      padding: 12px 16px;
+      /* Glass message bubbles */
+      background: rgba(255,255,255,0.09);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.18);
+      width: fit-content; max-width: 72%;
+      font-size: 0.88rem; line-height: 1.55;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.25);
+      position: relative; overflow: hidden;
+    }
+    .message::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+    }
+    .message.me {
+      margin-left: auto;
+      background: rgba(30, 80, 220, 0.28);
+      border-color: rgba(120,200,255,0.25);
+      box-shadow: 0 0 18px rgba(30,80,220,0.12), inset 0 1px 0 rgba(255,255,255,0.22), 0 4px 16px rgba(0,0,0,0.22);
+    }
+
+    .meta {
+      font-family:'Rajdhani',sans-serif; font-size:0.7rem; letter-spacing:1px;
+      color:rgba(160,210,255,0.62); margin-bottom:4px;
+    }
+    .message.me .meta { color:rgba(200,225,255,0.62); }
+
+    /* ══ Input row ══ */
+    .input-row {
+      display: flex; gap: 10px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.12);
+      margin-top: 18px; align-items: center;
+    }
+
+    .input {
+      flex: 1; padding: 13px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+      color: white;
+      font-family: 'Inter', sans-serif; font-size: 0.88rem;
+      transition: all 0.25s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.1);
+    }
+    .input:focus {
+      border-color: rgba(120,210,255,0.55);
+      box-shadow: 0 0 0 3px rgba(80,180,255,0.13), inset 0 1px 0 rgba(255,255,255,0.2);
+      outline: none; background: rgba(255,255,255,0.12);
+    }
+    .input::placeholder { color: rgba(160,210,255,0.38); }
+
+    /* Glass buttons */
+    .button {
+      padding: 13px 20px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.26);
+      background: rgba(30, 80, 220, 0.3);
+      backdrop-filter: blur(12px);
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      cursor: pointer; transition: all 0.25s; white-space: nowrap;
+      position: relative; overflow: hidden;
+      box-shadow:
+        inset 0 1.5px 0 rgba(255,255,255,0.42),
+        inset 0 -1px 0 rgba(0,0,0,0.16),
+        0 4px 18px rgba(20,60,200,0.28);
+    }
+    .button::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 50%;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.12), transparent);
+      border-radius: 14px 14px 0 0;
+    }
+    .button:hover {
+      background: rgba(40,100,255,0.42);
+      box-shadow: 0 0 20px rgba(80,180,255,0.28), 0 6px 24px rgba(20,60,200,0.38), inset 0 1.5px 0 rgba(255,255,255,0.5);
+      transform: translateY(-1px);
+    }
+
+    /* ══ GIF Modal ══ */
+    #gifModal {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(6, 15, 55, 0.7);
+      backdrop-filter: blur(24px) saturate(200%);
+      -webkit-backdrop-filter: blur(24px) saturate(200%);
+      padding: 20px; height: 45%;
+      border-radius: 20px 20px 0 0;
+      border-top: 1px solid rgba(255,255,255,0.25);
+      box-shadow:
+        inset 0 1.5px 0 rgba(255,255,255,0.45),
+        0 -16px 60px rgba(0,0,0,0.5),
+        0 0 40px rgba(30,80,255,0.1);
+      display: none; overflow-y: auto; z-index: 999;
+    }
+
+    #gifSearch {
+      width: 100%; padding: 12px 16px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.09);
+      backdrop-filter: blur(10px);
+      color: white; margin-bottom: 16px;
+      font-family: 'Inter', sans-serif;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+
+    #gifResults { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+
+    /* Corners */
+    .corner { position:fixed; z-index:20; opacity:0.45; width:36px; height:36px; }
+    .corner-tl { top:18px; left:18px;   border-top:1.5px solid rgba(255,255,255,0.5); border-left:1.5px solid rgba(255,255,255,0.5); border-radius:4px 0 0 0; }
+    .corner-tr { top:18px; right:18px;  border-top:1.5px solid rgba(255,255,255,0.5); border-right:1.5px solid rgba(255,255,255,0.5); border-radius:0 4px 0 0; }
+    .corner-bl { bottom:18px; left:18px;  border-bottom:1.5px solid rgba(255,255,255,0.5); border-left:1.5px solid rgba(255,255,255,0.5); border-radius:0 0 0 4px; }
+    .corner-br { bottom:18px; right:18px; border-bottom:1.5px solid rgba(255,255,255,0.5); border-right:1.5px solid rgba(255,255,255,0.5); border-radius:0 0 4px 0; }
+
+    @keyframes shineSwipe { 0%{left:-130%} 45%,100%{left:160%} }
+  </style>
+</head>
+<body>
+
+  <img class="bg-image" src="img/ado.jpg" alt="" />
+  <div class="bg-tints"></div>
+  <div class="bg-film"></div>
+  <div class="scanlines"></div>
+  <div class="grid-bg"></div>
+
+  <canvas id="aura-bg"></canvas>
+  <script>
+  (function(){
+    const c=document.getElementById('aura-bg');
+    const ctx=c.getContext('2d');
+    let W,H,orbs;
+    function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
+    function mkOrbs(){
+      orbs=[
+        {x:W*.2,y:H*.3,r:W*.45,color:'26,79,214', speed:0.0008,a:0},
+        {x:W*.8,y:H*.7,r:W*.4, color:'79,195,247',speed:0.0006,a:1},
+        {x:W*.5,y:H*.1,r:W*.35,color:'13,47,138', speed:0.0007,a:2},
+      ];
+    }
+    resize();mkOrbs();
+    window.addEventListener('resize',()=>{resize();mkOrbs();});
+    let t=0;
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      orbs.forEach(o=>{
+        const pulse=Math.sin(t*o.speed*1000+o.a)*0.3+0.7;
+        const g=ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r*pulse);
+        g.addColorStop(0,`rgba(${o.color},0.08)`);
+        g.addColorStop(0.5,`rgba(${o.color},0.04)`);
+        g.addColorStop(1,`rgba(${o.color},0)`);
+        ctx.fillStyle=g;
+        ctx.beginPath();ctx.arc(o.x,o.y,o.r*pulse,0,Math.PI*2);ctx.fill();
+      });
+      t=performance.now()/1000;
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+  </script>
+
+  <div class="corner corner-tl"></div>
+  <div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div>
+  <div class="corner corner-br"></div>
+
+  <div class="chat-wrapper">
+    <div class="sidebar">
+      <div class="logo">AURA CHAT</div>
+      <div id="roomTitle"></div>
+      <div>
+        <div class="users-label">Users in room</div>
+        <div id="usersListInner"></div>
+      </div>
+    </div>
+
+    <div class="chat-panel">
+      <div class="user-bar">
+        <img id="myAvatar" alt="Avatar" />
+        <div>
+          <div id="myName"></div>
+          <div id="myLang"></div>
+        </div>
+      </div>
+
+      <div id="messages"></div>
+
+      <div class="input-row">
+        <button id="gifBtn" class="button">GIF</button>
+        <input id="messageInput" class="input" placeholder="Type a message..." autocomplete="off" />
+        <button id="sendBtn" class="button">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="gifModal">
+    <input id="gifSearch" class="input" placeholder="Search GIFs..." />
+    <div id="gifResults"></div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/js/utils.js" defer></script>
+  <script src="/js/socket.js" defer></script>
+  <script src="/js/chat.js" defer></script>
+</body>
+</html>

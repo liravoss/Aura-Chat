@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Community — AuraChat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: #e6eef8;
+      padding: 28px 20px 40px;
+      overflow-x: hidden;
+    }
+
+    /* ══ VIVID BACKGROUND ══ */
+    .bg-video {
+      position: fixed; inset: 0; z-index: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      /* Keep color visible — glass works by frosting what's behind it */
+      filter: brightness(0.55) saturate(1.4);
+    }
+
+    .bg-tints {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background:
+        radial-gradient(ellipse 70% 60% at 15% 25%, rgba(0,60,200,0.5) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 70% at 85% 75%, rgba(80,0,180,0.45) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 55% 5%, rgba(0,140,220,0.35) 0%, transparent 55%);
+    }
+
+    .bg-film {
+      position: fixed; inset: 0; z-index: 2; pointer-events: none;
+      background: rgba(2, 8, 30, 0.35);
+    }
+
+    .scanlines {
+      position: fixed; inset: 0; z-index: 3; pointer-events: none;
+      background: repeating-linear-gradient(transparent, transparent 2px, rgba(0,200,255,0.015) 3px);
+    }
+
+    canvas#aura-bg {
+      position: fixed; inset: 0; z-index: 3;
+      pointer-events: none; width: 100%; height: 100%;
+    }
+
+    .container {
+      max-width: 900px; margin: 0 auto;
+      position: relative; z-index: 10;
+    }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px; padding: 0 4px;
+    }
+
+    .logo {
+      font-family: 'Orbitron', monospace; font-weight: 900;
+      font-size: 24px; letter-spacing: 5px;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(120,210,255,0.85), 0 0 28px rgba(80,180,255,0.5);
+    }
+
+    .header-tagline {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.78rem; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(160,210,255,0.65);
+    }
+
+    /* ══ GLASS CARD ══ */
+    .card {
+      background: rgba(8, 18, 65, 0.16);
+      backdrop-filter: blur(22px) saturate(200%) brightness(1.08);
+      -webkit-backdrop-filter: blur(22px) saturate(200%) brightness(1.08);
+      padding: 24px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      box-shadow:
+        0 0 0 0.5px rgba(255,255,255,0.08),
+        0 16px 55px rgba(0,0,0,0.5),
+        0 0 40px rgba(30,80,255,0.1),
+        inset 0 1.5px 0 rgba(255,255,255,0.55),
+        inset 0 -1px 0 rgba(0,0,0,0.18),
+        inset 1px 0 0 rgba(255,255,255,0.10),
+        inset -1px 0 0 rgba(255,255,255,0.07);
+      position: relative; overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute; top: 0; left: 8%; right: 8%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.88) 25%, rgba(210,240,255,1) 50%, rgba(255,255,255,0.88) 75%, transparent 100%);
+    }
+
+    .card::after {
+      content: "";
+      position: absolute; top: 0; left: -130%; width: 65%; height: 100%;
+      background: linear-gradient(108deg, transparent 35%, rgba(255,255,255,0.06) 48%, rgba(255,255,255,0.11) 50%, rgba(255,255,255,0.06) 52%, transparent 65%);
+      animation: shineSwipe 7s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .card-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(160,210,255,0.8);
+      display: block; margin-bottom: 16px;
+      position: relative; z-index: 1;
+    }
+
+    /* Glass inputs */
+    .input {
+      padding: 13px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.09);
+      color: #fff; flex-grow: 1;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem;
+      transition: all 0.25s;
+      backdrop-filter: blur(10px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.1);
+      position: relative; z-index: 1;
+    }
+    .input:focus {
+      border-color: rgba(120,210,255,0.6);
+      box-shadow: 0 0 0 3px rgba(80,180,255,0.14), inset 0 1px 0 rgba(255,255,255,0.2);
+      outline: none;
+      background: rgba(255,255,255,0.13);
+    }
+    .input::placeholder { color: rgba(160,210,255,0.38); }
+
+    /* Glass buttons */
+    .button {
+      padding: 13px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.28);
+      background: rgba(30, 80, 220, 0.32);
+      backdrop-filter: blur(12px);
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.82rem; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase;
+      cursor: pointer; transition: all 0.25s;
+      white-space: nowrap;
+      position: relative; overflow: hidden; z-index: 1;
+      box-shadow:
+        inset 0 1.5px 0 rgba(255,255,255,0.42),
+        inset 0 -1px 0 rgba(0,0,0,0.18),
+        0 5px 20px rgba(20,60,200,0.3);
+    }
+    .button::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 50%;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.12), transparent);
+      border-radius: 12px 12px 0 0;
+    }
+    .button:hover {
+      background: rgba(40,100,255,0.45);
+      box-shadow: 0 0 22px rgba(80,180,255,0.32), 0 7px 26px rgba(20,60,200,0.4), inset 0 1.5px 0 rgba(255,255,255,0.5);
+      transform: translateY(-1px);
+    }
+
+    /* Room list */
+    .rooms-grid { display: flex; flex-direction: column; gap: 10px; }
+
+    .room-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 18px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-left: 3px solid rgba(120,210,255,0.6);
+      backdrop-filter: blur(10px);
+      transition: all 0.2s;
+      position: relative; overflow: hidden; z-index: 1;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .room-item::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+    }
+    .room-item:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(120,210,255,0.35);
+      border-left-color: rgba(120,210,255,0.9);
+      box-shadow: 0 0 20px rgba(80,180,255,0.1), inset 0 1px 0 rgba(255,255,255,0.15);
+      transform: translateX(2px);
+    }
+
+    .room-name { font-weight: 600; font-size: 0.95rem; color: rgba(220,235,255,0.95); }
+
+    .small-btn {
+      padding: 8px 16px; font-size: 0.72rem; font-weight: 700;
+      font-family: 'Rajdhani', sans-serif; letter-spacing: 2px; text-transform: uppercase;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.24);
+      color: rgba(200,225,255,0.9);
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
+    }
+    .small-btn:hover {
+      background: rgba(80,180,255,0.22);
+      border-color: rgba(120,210,255,0.55);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(80,180,255,0.22), inset 0 1px 0 rgba(255,255,255,0.25);
+    }
+
+    .small { font-size:0.78rem; color:rgba(160,210,255,0.6); font-family:'Rajdhani',sans-serif; letter-spacing:1px; }
+    .input-tip { font-family:'Rajdhani',sans-serif; font-size:0.72rem; letter-spacing:1px; color:rgba(120,210,255,0.45); text-align:right; margin-top:6px; }
+
+    footer { text-align:center; margin-top:32px; font-family:'Rajdhani',sans-serif; font-size:0.8rem; letter-spacing:2px; color:rgba(160,210,255,0.4); }
+
+    /* Modal */
+    #globalMessageModal {
+      position:fixed; bottom:24px; left:50%;
+      transform:translateX(-50%) translateY(100px);
+      background: rgba(8,20,65,0.7);
+      backdrop-filter: blur(20px);
+      border:1px solid rgba(255,255,255,0.22);
+      color:white; padding:14px 24px;
+      border-radius:12px;
+      box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.3), 0 8px 32px rgba(0,0,0,0.4);
+      z-index:1000; opacity:0;
+      transition:transform 0.3s,opacity 0.3s;
+      cursor:pointer; max-width:90%; text-align:center;
+      font-family:'Rajdhani',sans-serif; font-size:0.9rem; letter-spacing:1px;
+    }
+    #globalMessageModal.show { transform:translateX(-50%) translateY(0); opacity:1; }
+
+    /* Corners */
+    .corner { position:fixed; z-index:20; opacity:0.45; width:36px; height:36px; }
+    .corner-tl { top:18px; left:18px;   border-top:1.5px solid rgba(255,255,255,0.5); border-left:1.5px solid rgba(255,255,255,0.5); border-radius:4px 0 0 0; }
+    .corner-tr { top:18px; right:18px;  border-top:1.5px solid rgba(255,255,255,0.5); border-right:1.5px solid rgba(255,255,255,0.5); border-radius:0 4px 0 0; }
+    .corner-bl { bottom:18px; left:18px;  border-bottom:1.5px solid rgba(255,255,255,0.5); border-left:1.5px solid rgba(255,255,255,0.5); border-radius:0 0 0 4px; }
+    .corner-br { bottom:18px; right:18px; border-bottom:1.5px solid rgba(255,255,255,0.5); border-right:1.5px solid rgba(255,255,255,0.5); border-radius:0 0 4px 0; }
+
+    @keyframes shineSwipe { 0%{left:-130%} 45%,100%{left:160%} }
+  </style>
+</head>
+<body>
+
+  <video class="bg-video" autoplay loop muted playsinline>
+    <source src="img/miku1.mp4" type="video/mp4" />
+  </video>
+  <div class="bg-tints"></div>
+  <div class="bg-film"></div>
+  <div class="scanlines"></div>
+
+  <canvas id="aura-bg"></canvas>
+  <script>
+  (function(){
+    const c=document.getElementById('aura-bg');
+    const ctx=c.getContext('2d');
+    let W,H,orbs;
+    function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}
+    function mkOrbs(){
+      orbs=[
+        {x:W*.2,y:H*.3,r:W*.45,color:'26,79,214', speed:0.0008,a:0},
+        {x:W*.8,y:H*.7,r:W*.4, color:'79,195,247',speed:0.0006,a:1},
+        {x:W*.5,y:H*.1,r:W*.35,color:'13,47,138', speed:0.0007,a:2},
+      ];
+    }
+    resize();mkOrbs();
+    window.addEventListener('resize',()=>{resize();mkOrbs();});
+    let t=0;
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      orbs.forEach(o=>{
+        const pulse=Math.sin(t*o.speed*1000+o.a)*0.3+0.7;
+        const g=ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r*pulse);
+        g.addColorStop(0,`rgba(${o.color},0.08)`);
+        g.addColorStop(0.5,`rgba(${o.color},0.04)`);
+        g.addColorStop(1,`rgba(${o.color},0)`);
+        ctx.fillStyle=g;
+        ctx.beginPath();ctx.arc(o.x,o.y,o.r*pulse,0,Math.PI*2);ctx.fill();
+      });
+      t=performance.now()/1000;
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+  </script>
+
+  <div class="corner corner-tl"></div>
+  <div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div>
+  <div class="corner corner-br"></div>
+
+  <div class="container">
+    <header>
+      <div class="logo">AURA<span style="opacity:0.55;">CHAT</span></div>
+      <div class="header-tagline">Global Language Community</div>
+    </header>
+
+    <div class="card">
+      <span class="card-label">Create a new room</span>
+      <div style="display:flex;flex-direction:column;gap:8px;position:relative;z-index:1;">
+        <div style="display:flex;gap:10px;">
+          <input id="roomName" class="input" placeholder="Enter room name..." />
+          <button id="createRoomBtn" class="button">Create</button>
+        </div>
+        <div class="input-tip">Tip: choose a clear name so others can find your room.</div>
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;position:relative;z-index:1;">
+        <span class="card-label" style="margin-bottom:0">Available Rooms</span>
+        <span class="small">Join a room to start chatting</span>
+      </div>
+      <div id="rooms" class="rooms-grid" style="position:relative;z-index:1;">
+        <div class="small">Loading rooms...</div>
+      </div>
+    </div>
+
+    <footer>Made with ❤ — AuraChat</footer>
+  </div>
+
+  <div id="globalMessageModal"><span id="globalMessageContent"></span></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/socket.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded",()=>{
+      const s=document.createElement("script");
+      s.src="/js/community.js";
+      document.body.appendChild(s);
+    });
+  </script>
+</body>
+</html>
