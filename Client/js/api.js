@@ -1,4 +1,4 @@
-const SERVER_URL = 'http://localhost:4000';
+const SERVER_URL = '';
 
 async function apiCreateUser({ username, avatarUrl, language }) {
   const resp = await fetch(`${SERVER_URL}/api/users`, {

@@ -3,7 +3,7 @@
 console.log("Initializing chat socket...");
 
 // Connect to same-origin Socket.IO server
-const socket = io("http://localhost:4000", {
+const socket = io({
   transports: ["websocket", "polling"]
 });
 
