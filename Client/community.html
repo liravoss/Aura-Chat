@@ -249,10 +249,35 @@
 </head>
 <body>
 
-  <video class="bg-video" autoplay loop muted playsinline>
+  <video class="bg-video" id="bgVideo" autoplay loop muted playsinline preload="auto">
     <source src="img/miku1.mp4" type="video/mp4" />
   </video>
-  <div class="bg-tints"></div>
+  <script>
+  (function(){
+    const vid = document.getElementById('bgVideo');
+    // Force play as soon as possible
+    function tryPlay() {
+      vid.play().catch(() => {
+        // If blocked, retry on first user interaction
+        document.addEventListener('click', () => vid.play(), { once: true });
+        document.addEventListener('touchstart', () => vid.play(), { once: true });
+      });
+    }
+    vid.addEventListener('canplay', tryPlay);
+    // Recover from stalls — if video pauses unexpectedly, restart it
+    vid.addEventListener('pause', () => {
+      if (!vid.ended) vid.play().catch(() => {});
+    });
+    vid.addEventListener('stalled', () => {
+      vid.load();
+      vid.play().catch(() => {});
+    });
+    vid.addEventListener('waiting', () => {
+      // buffering — just let it catch up, no action needed
+    });
+    tryPlay();
+  })();
+  </script>
   <div class="bg-film"></div>
   <div class="scanlines"></div>
 
